@@ -418,7 +418,7 @@ impl BlockAssembler {
             let block = self.make_block(false);
             self.blocks.push(block);
         }
-        log::debug!("Ran block template in {}ms", start.elapsed().as_millis());
+        log::debug!("Finished making blocks in {}ms", start.elapsed().as_millis());
         self.blocks
     }
 

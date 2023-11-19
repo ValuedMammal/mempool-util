@@ -36,7 +36,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
             if quiet {
                 // log output only
                 if blocks.len() > 1 {
-                    let target_fee = blocks[0].fee_cutoff.expect("is some");
+                    let target_fee = blocks[0].fee_cutoff.expect("fee cutoff is some");
 
                     // get core smart fee (conf target 2)
                     // and find `delta = (fee_cutoff - smart_fee)`
@@ -72,11 +72,11 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
                 println!("{}", serde_json::to_string_pretty(&res)?);
             } else {
                 // get fee histogram
-                let mut histogram = blocks[0].fee_histogram.expect("is some");
+                let mut histogram = blocks[0].fee_histogram.expect("fee histogram is some");
 
                 // get core smart fee (conf target 2)
                 // and find `delta = (fee_cutoff - smart_fee)`
-                let target_fee = blocks[0].fee_cutoff.expect("is some");
+                let target_fee = blocks[0].fee_cutoff.expect("fee cutoff is some");
 
                 let smart_fee_res = core.estimate_smart_fee(2, None)?;
                 if let Some(smart_fee) = smart_fee_res.fee_rate {
@@ -90,7 +90,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
 
                 if blocks.len() == 3 {
                     // combine histogram data from blocks 1-2
-                    let fee_array = blocks[1].fee_histogram.expect("is some");
+                    let fee_array = blocks[1].fee_histogram.expect("fee histogram is some");
                     for i in 0..fee_array.len() {
                         let wu = fee_array[i].1;
                         histogram[i].1 += wu;
