@@ -27,7 +27,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
                 println!("mempool empty");
                 return Ok(());
             }
-            
+
             // generate blocks, validate result
             let blocks = blockmk::audit_fees(next_height, raw_mempool);
             //let raw_mempool_count = raw_mempool.len();

@@ -1,16 +1,18 @@
-use crate::hex;
+use std::str::from_utf8;
+
 use bitcoin::Script;
 use bitcoin::Transaction;
 use bitcoin::TxOut;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
-use std::str::from_utf8;
+
+use crate::hex;
 
 lazy_static! {
-    /// An ordinal script template. The pattern spans 53 bytes of an element of the witness stack, beginning with
-    /// a 32-byte data push. The distinguishing feature of the "ord" pattern is the fragment `OP_0 OP_IF OP_PUSHBYTES_3 6f7264`.
-    /// Additionally, a valid match includes a 10-byte push representing the content-type of the inscribed data.
-    static ref RE: Regex = Regex::new(r"OP_PUSHBYTES_32 [0-9a-f]{64} OP_CHECKSIG OP_0 OP_IF OP_PUSHBYTES_3 6f7264 OP_PUSHBYTES_1 01 OP_PUSHBYTES_10 ([0-9a-f]{20})")
+    /// An ordinal script fragment. The pattern is a slice of the witness data and is distinguished
+    /// by the pattern `OP_0 OP_IF OP_PUSHBYTES_3 6f7264`. The trailing fragment is meant to
+    /// capture the content-type, prefixed by its length, and terminating at the next `OP_0`.
+    static ref RE: Regex = Regex::new(r"^.*OP_0 OP_IF OP_PUSHBYTES_3 6f7264 OP_PUSHBYTES_1 01 OP_PUSHBYTES_([\d]+) ([0-9a-f]+) OP_0")
         .unwrap();
 }
 
@@ -33,30 +35,29 @@ pub fn tr_ord_count(block: bitcoin::Block) -> usize {
     txs.len()
 }
 
-/// is ord
+/// Is ord
 fn is_ord(tx: &Transaction) -> bool {
     for input in &tx.input {
         if input.witness.len() >= 2 {
-            let witness_data = &input.witness[1];
-            if witness_data.len() >= 53 {
-                let slice = &witness_data[..53];
-                let script = Script::from_bytes(slice).to_asm_string();
-                if RE.is_match(&script) {
-                    return true;
-                }
+            let data = &input.witness[1];
+            let script = Script::from_bytes(data).to_asm_string();
+            if RE.is_match(&script) {
+                return true;
             }
         }
     }
     false
 }
 
-/// ord content type
-#[allow(unused)]
+/// Ord content type
+#[allow(dead_code)]
 fn ord_content_type(script_asm: &str) -> Option<String> {
     if let Some(cap) = RE.captures(script_asm) {
-        let content_type_hex = &cap[1];
-        let content_type_data = hex!(content_type_hex);
-        if let Ok(content_type) = from_utf8(&content_type_data) {
+        let content_type_len: usize = (cap[1]).parse().expect("parse numerical");
+        let content_type_hex = &cap[2];
+        let data = hex!(content_type_hex);
+        if data.len() == content_type_len {
+            let content_type = from_utf8(&data).expect("parse utf8");
             return Some(content_type.to_string());
         }
     }
@@ -66,13 +67,12 @@ fn ord_content_type(script_asm: &str) -> Option<String> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::hex;
     use std::env;
 
     #[test]
     fn test_ord() {
         let cwd = env::var("CARGO_MANIFEST_DIR").unwrap();
-        let path_to_rawtx = format!("{cwd}/tests/rawtx.dat");
+        let path_to_rawtx = format!("{cwd}/tests/rawtx1.dat");
         let rawtx = std::fs::read(path_to_rawtx).unwrap();
         let tx: Transaction = bitcoin::consensus::deserialize(&rawtx).unwrap();
         assert!(is_ord(&tx));
@@ -81,17 +81,17 @@ mod test {
         let script_asm = Script::from_bytes(witness_data).to_asm_string();
         let content_type = ord_content_type(&script_asm);
         assert!(content_type.is_some());
-        //dbg!(content_type.unwrap());
+        //dbg!(content_type); // image/png
     }
 
     #[test]
-    fn parse_tapscript_from_rawtx_file() {
+    fn captures_from_rawtx_file() {
         // get raw tx from txid
         // txid: e85602c03f9566bab21246e9fa16f0039c887a70d2f2e79147f4770f6ced5ac5
         // curl --output rawtx.dat https://blockstream.info/api/tx/:txid/raw
         /*
-            template: 0x20 <32bytes> ac 00 63 03 6f7264 01 01 0a <10bytes>
-            OP_PUSHBYTES_32 [0-9a-f]{64} OP_CHECKSIG OP_0 OP_IF OP_PUSHBYTES_3 6f7264 OP_PUSHBYTES_1 01 OP_PUSHBYTES_10 [0-9a-f]{20}
+            template:
+            OP_0 OP_IF OP_PUSHBYTES_3 6f7264 OP_PUSHBYTES_1 01 OP_PUSHBYTES_([\d]+) ([0-9a-f]+) OP_0
         */
         let cwd = env::var("CARGO_MANIFEST_DIR").unwrap();
         let path_to_rawtx = format!("{cwd}/tests/rawtx.dat");
@@ -99,18 +99,35 @@ mod test {
         let tx: Transaction = bitcoin::consensus::deserialize(&rawtx).unwrap();
         let witness = &tx.input[0].witness;
         //dbg!(witness.len()); // 3
-        let witness_data = &witness[1];
-
-        assert!(witness_data.len() >= 53);
-        let template = &witness_data[..53];
-        let script = Script::from_bytes(template).to_asm_string();
-        //dbg!(script);
+        let data = &witness[1];
+        //dbg!(data.len()); // 15903
+        let script = Script::from_bytes(data).to_asm_string();
 
         assert!(RE.is_match(&script));
-        let cap = RE.captures(&script).unwrap();
-        let content_type_hex = &cap[1];
+        let caps = RE.captures(&script).unwrap();
+        let content_type_len: usize = caps[1].parse().unwrap();
+        //dbg!(content_type_len); // 10
+        let content_type_hex = &caps[2];
         let content_type_data = hex!(content_type_hex);
-        let content_type = from_utf8(&content_type_data).unwrap();
-        assert_eq!(content_type, "image/webp");
+        if content_type_data.len() == content_type_len {
+            let content_type = from_utf8(&content_type_data).unwrap();
+            assert_eq!(content_type, "image/webp");
+        }
+    }
+
+    #[test]
+    fn arbitrary_no_checksig() {
+        // txid: 14f1de6e994dabe705f980d0ca079d01a41ca7524b4d96e75e57a3a6552d664c
+        /*
+           OP_PUSHBYTES_1 ac
+           OP_PUSHBYTES_1 ac
+           OP_EQUALVERIFY
+           OP_0
+           OP_IF
+        */
+        let data = hex!("02000000000101dc628dbe1bd077aff4476d42e766a679645fd7012f879c8e9182e878c93d34cf1100000000ffffffff012601000000000000160014a40897ac0756778584e7dbe457cca54abc6daf4c0301024f01ac01ac880063036f726401010a746578742f706c61696e00347b2270223a226272632d3230222c226f70223a226d696e74222c227469636b223a22626e7378222c22616d74223a22313030227d6821c1782891272861d4104f524ac31855e20aa1bdb507ac4a6619c030768496b90e8400000000");
+        let tx: Transaction = bitcoin::consensus::deserialize(&data).unwrap();
+        //dbg!(tx);
+        assert!(is_ord(&tx));
     }
 }
