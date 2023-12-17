@@ -81,6 +81,15 @@ pub enum TaprootSubCmd {
     Outputs(Block),
     /// Scan a block for the "ord" pattern
     Ord(Block),
+    /// Display the witness elements for an input
+    Witness {
+        /// Transaction hex
+        #[clap(required(true))]
+        transaction: String,
+        /// vin index
+        #[clap(required(true))]
+        index: usize,
+    },
 }
 
 /// A required block height

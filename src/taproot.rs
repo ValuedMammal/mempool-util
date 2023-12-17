@@ -1,6 +1,7 @@
 use std::str::from_utf8;
 
 use bitcoin::Script;
+use bitcoin::ScriptBuf;
 use bitcoin::Transaction;
 use bitcoin::TxOut;
 use lazy_static::lazy_static;
@@ -62,6 +63,13 @@ fn ord_content_type(script_asm: &str) -> Option<String> {
         }
     }
     None
+}
+
+/// Returns an iterator over the witness stack elements.
+pub fn witness_elements(txin: &bitcoin::TxIn) -> impl Iterator<Item = ScriptBuf> + '_ {
+    txin.witness
+        .iter()
+        .map(|bytes| Script::from_bytes(bytes).to_owned())
 }
 
 #[cfg(test)]
@@ -129,5 +137,16 @@ mod test {
         let tx: Transaction = bitcoin::consensus::deserialize(&data).unwrap();
         //dbg!(tx);
         assert!(is_ord(&tx));
+    }
+
+    #[test]
+    fn display_witness() {
+        let data = hex!("02000000000101dc628dbe1bd077aff4476d42e766a679645fd7012f879c8e9182e878c93d34cf1100000000ffffffff012601000000000000160014a40897ac0756778584e7dbe457cca54abc6daf4c0301024f01ac01ac880063036f726401010a746578742f706c61696e00347b2270223a226272632d3230222c226f70223a226d696e74222c227469636b223a22626e7378222c22616d74223a22313030227d6821c1782891272861d4104f524ac31855e20aa1bdb507ac4a6619c030768496b90e8400000000");
+        let tx: Transaction = bitcoin::consensus::deserialize(&data).unwrap();
+
+        let txin = tx.input.first().unwrap();
+        for elem in witness_elements(txin) {
+            println!("{}", elem);
+        }
     }
 }
