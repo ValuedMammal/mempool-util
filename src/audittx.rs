@@ -76,6 +76,7 @@ impl PartialEq for AuditTx {
 
 impl Eq for AuditTx {}
 
+#[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for AuditTx {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         let a = (self.score, self.order, self.uid);
@@ -98,6 +99,7 @@ impl PartialEq for TxPriority {
 
 impl Eq for TxPriority {}
 
+#[allow(clippy::non_canonical_partial_ord_impl)]
 impl PartialOrd for TxPriority {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         let a = (self.score, self.order, self.uid);
