@@ -1,13 +1,10 @@
 # mempool-util
-A mempool interrogator.
 
 The goal of the project is to create tools for mempool analysis. Areas of inquiry include:
 
 ### Mempool
 - Retrospective block audit
     - How does the composition of the last confirmed block compare to our node's recent block template? If a discrepancy exists between expected and actual block composition, ask why.
-- Prioritized transactions
-    - calculate max and aggregate fee delta (modified fee - base fee)
 - Fee reporting / estimation
     - emulate block assembly from raw mempool
     - track the spread between Core's historical estimator and our own near-term analysis
@@ -27,3 +24,6 @@ The goal of the project is to create tools for mempool analysis. Areas of inquir
 - Two flavors of research:
     - real-time mempool analysis, and the state of p2p
     - historical observation (replicable)
+
+### Disclaimer
+Please note this is experimental software - there will be bugs.
