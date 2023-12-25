@@ -41,13 +41,19 @@ impl Auditor {
     }
 
     /// Returns the uids of the current mempool ancestors. Note, to be considered
-    /// an ancestor, an entry must be part of a cluster while having no direct ancestors
+    /// an ancestor, an entry must have direct descendants while having no ancestors
     /// of its own.
-    fn ancestors(&self) -> Vec<&Entry> {
-        self.pool
+    fn ancestors(&self) -> Option<Vec<&Entry>> {
+        let res: Vec<&Entry> = self.pool
             .values()
             .filter(|tx| tx.ancestors.is_empty() && !tx.children.is_empty())
-            .collect()
+            .collect();
+
+        if res.is_empty() {
+            return None;
+        }
+        
+        Some(res)
     }
 }
 
@@ -113,15 +119,18 @@ impl Auditor {
         (hi_count, ancestors)
     }
 
-    /// Returns the maximum tree height among all ancestors, where an ancestor
-    /// is defined as a tx having no ancestors of its own.
+    /// Returns the maximum tree height of all ancestors.
     fn max_descendant_depth(&self) -> u32 {
         let mut heights = vec![];
-        for root in self.ancestors() {
+        let Some(ancestors) = self.ancestors() else {
+            // nothing to do
+            return 0;
+        };
+        for root in ancestors {
             heights.push(self.tree_height(root));
         }
         heights.sort_unstable();
-        heights.pop().unwrap_or(0)
+        heights.pop().expect("collected tree heights is not empty")
     }
 
     /// Computes height of a tree given a root node, based on a resursive algorithm for
