@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 
-/// My long about
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 #[clap(propagate_version = true)]
@@ -41,7 +40,7 @@ pub enum FeeSubCmd {
         #[clap(long, short = 'q')]
         quiet: bool,
     },
-    /// Tx prioritisation inference through fee delta calculation
+    /// Tx prioritisation deltas
     Delta,
     /// Mempool cluster analysis
     Cluster,
