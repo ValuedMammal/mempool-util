@@ -1,8 +1,7 @@
-//#![allow(unused)]
-use bitcoin::Transaction;
-use bitcoin::Txid;
 use std::thread;
 use std::time::Duration;
+
+use bitcoin::Txid;
 
 pub use {
     // export globals
@@ -123,7 +122,7 @@ pub fn check_dust_full(block: &bitcoin::Block, core: &Client) -> Result<(usize, 
         let mut tx_value = 0u64;
         let tx_info = core.get_raw_transaction_info_verbose(&tx.txid(), None)?;
         for input in &tx_info.vin {
-            let prevout = input.prevout.as_ref().expect("is some");
+            let prevout = input.prevout.as_ref().expect("input has prevout");
             tx_value += prevout.value.to_sat();
         }
 
@@ -162,28 +161,29 @@ pub fn check_dust_full(block: &bitcoin::Block, core: &Client) -> Result<(usize, 
 
 /// Scores a newly connected block on its similarity to a given set of txids
 pub fn block_audit(block: &bitcoin::Block, projected: &[Txid]) -> f64 {
-    // In general, block audit works by polling Core's rpc getblocktemplate
-    // at a regular interval, say 5 minutes, and storing the result.
-    // Note, *that* implementaion occurs elsewhere and is pre-requisite to this function.
-    // Upon hearing of a newly confirmed block, we compare the set of txids
-    // in the block against those projected by the most recent template.
-    // We then produce a 'score' that indicates the fraction of block txs that
-    // was expected, with any deviation from 1.0 indicating the new block contains
-    // tx not previously projected to be confirmed in the next block.
-    let mut txs = block.txdata.clone();
+    // In general, block audit works by polling Core's `getblocktemplate` rpc at a regular
+    // interval, say 5 minutes, and storing the result. (Note, we assume that step has
+    // already occurred somewhere else). Upon hearing of a newly confirmed block, we compare
+    // the set of txids in the block against those projected by the most recent template.
+    // We then produce a 'score' that indicates the fraction of block txs that was expected
+    // with any deviation from 1.0 indicating the new block contains tx not previously
+    // projected to be confirmed in the next block.
+    let mut txids: Vec<Txid> = block
+        .txdata
+        .iter()
+        .filter_map(|tx| {
+            if !tx.is_coin_base() {
+                Some(tx.txid())
+            } else {
+                None
+            }
+        })
+        .collect();
 
-    // drop coinbase
-    let first = txs.first().expect("block not empty");
-    if first.is_coin_base() {
-        txs.swap_remove(0);
-    } else {
-        txs.retain(|tx| !tx.is_coin_base());
-    }
-
-    // map to txid, and filter projected
-    let mut txids: Vec<Txid> = txs.iter().map(Transaction::txid).collect();
     let num_actual = txids.len() as f64;
 
+    // to get the number of txs unseen, more precisely 'unexpected', we retain only the txids
+    // in the given `block` that are *not* contained in `projected`.
     txids.retain(|tx| !projected.contains(tx));
     let num_unseen = txids.len() as f64;
 
@@ -209,7 +209,7 @@ impl Audit for Vec<TestMempoolEntry> {
                 let uid = entry.uid;
                 let mut audit_tx = audittx::AuditTx {
                     uid,
-                    order: u32::try_from(uid).expect("cast int"),
+                    order: u32::try_from(uid).unwrap(),
                     weight: entry.weight,
                     fee: entry.fee,
                     parents: entry.parents,
@@ -229,6 +229,7 @@ mod test {
     use bitcoin::consensus::encode::deserialize;
     use bitcoin::Block;
     use bitcoin::OutPoint;
+    use bitcoin::Transaction;
     use bitcoin::TxIn;
 
     #[test]

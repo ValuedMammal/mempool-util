@@ -129,22 +129,11 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
             let block = core.get_block(&block_hash)?;
 
             // Get block fees
-            let coinbase = {
-                let tx = block.txdata.first().expect("is some");
-                if tx.is_coin_base() {
-                    tx
-                } else {
-                    // coinbase not first in txdata ?
-                    let mut cb: Option<&Transaction> = None;
-                    for tx in &block.txdata {
-                        if tx.is_coin_base() {
-                            cb = Some(tx);
-                            break;
-                        }
-                    }
-                    cb.expect("coinbase present in txdata")
-                }
-            };
+            let coinbase = block
+                .txdata
+                .iter()
+                .find(|tx| tx.is_coin_base())
+                .expect("find coinbase");
             let subsidy = subsidy(height);
             let txout_sum: u64 = coinbase.output.iter().map(|txo| txo.value).sum();
             let block_fees: f64 =
