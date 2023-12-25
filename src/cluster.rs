@@ -1,6 +1,8 @@
-use super::*;
-use bitcoin::Txid;
 use serde::Serialize;
+
+use bitcoin::Txid;
+
+use super::*;
 
 /// Type that holds mempool entries to be analyzed
 #[derive(Debug)]
@@ -40,7 +42,7 @@ impl Auditor {
 
     /// Returns the uids of the current mempool ancestors. Note, to be considered
     /// an ancestor, an entry must be part of a cluster while having no direct ancestors
-    /// of its own
+    /// of its own.
     fn ancestors(&self) -> Vec<&Entry> {
         self.pool
             .values()
@@ -119,11 +121,11 @@ impl Auditor {
             heights.push(self.tree_height(root));
         }
         heights.sort_unstable();
-        heights.pop().expect("is some")
+        heights.pop().unwrap_or(0)
     }
 
     /// Computes height of a tree given a root node, based on a resursive algorithm for
-    /// computing the height of a binary tree, generalized for nodes with many children
+    /// computing the height of a binary tree, generalized for nodes with many children.
     fn tree_height(&self, tx: &Entry) -> u32 {
         if tx.children.is_empty() {
             return 0;
@@ -136,7 +138,7 @@ impl Auditor {
         }
 
         heights.sort_unstable();
-        heights.pop().expect("is some") + 1
+        heights.pop().expect("children not empty") + 1
     }
 
     /// Counts the number of mempool clusters
