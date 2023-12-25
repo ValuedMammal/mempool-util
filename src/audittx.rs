@@ -20,7 +20,7 @@ pub struct AuditTx {
     pub used: bool,
     pub modified: bool,
     pub dependency_rate: f64,
-    pub relatives_set: bool,
+    pub links_set: bool,
 }
 
 impl Default for AuditTx {
@@ -42,7 +42,7 @@ impl Default for AuditTx {
             used: false,
             modified: false,
             dependency_rate: f64::INFINITY,
-            relatives_set: false,
+            links_set: false,
         }
     }
 }
@@ -56,7 +56,7 @@ impl AuditTx {
         self.ancestor_weight = self.weight;
         //self.ancestor_sigops = self.sigops;
         self.score = feerate;
-        self.relatives_set = self.parents.is_empty();
+        self.links_set = self.parents.is_empty();
     }
 }
 

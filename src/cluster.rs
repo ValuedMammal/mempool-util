@@ -31,7 +31,7 @@ struct Entry {
     children: HashSet<usize>,
     parents: HashSet<usize>,
     ancestors: HashSet<usize>,
-    relatives_set: bool,
+    links_set: bool,
 }
 
 impl Auditor {
@@ -67,7 +67,7 @@ pub fn analyze(
     let mut auditor = Auditor::from(pool);
 
     for uid in 0..auditor.pool.len() {
-        auditor.set_relatives(uid);
+        auditor.set_links(uid);
     }
 
     let (size, ancestor_ids) = auditor.most_common_ancestors();
@@ -133,8 +133,8 @@ impl Auditor {
         heights.pop().expect("collected tree heights is not empty")
     }
 
-    /// Computes height of a tree given a root node, based on a resursive algorithm for
-    /// computing the height of a binary tree, generalized for nodes with many children.
+    /// Computes height of a tree given a root node, based on an algorithm for finding
+    /// the height of a binary tree, generalized for nodes with many children.
     fn tree_height(&self, tx: &Entry) -> u32 {
         if tx.children.is_empty() {
             return 0;
@@ -143,6 +143,7 @@ impl Auditor {
         let mut heights: Vec<u32> = vec![];
         for child in &tx.children {
             let tx = self.pool.get(child).expect("uid exists");
+            /* recursive step */
             heights.push(self.tree_height(tx));
         }
 
@@ -182,9 +183,9 @@ impl Auditor {
 }
 
 impl Cluster for Auditor {
-    fn set_relatives(&mut self, uid: usize) {
+    fn set_links(&mut self, uid: usize) {
         let tx = self.pool.get(&uid).expect("uid exists");
-        if tx.relatives_set {
+        if tx.links_set {
             return;
         }
 
@@ -195,10 +196,11 @@ impl Cluster for Auditor {
         // get ancestor uid's for this tx
         let mut ancestors: HashSet<usize> = HashSet::new();
         for parent_id in parents {
-            self.set_relatives(parent_id); // recursive
+            /* recursive step */
+            self.set_links(parent_id);
             let parent = self.pool.get_mut(&parent_id).expect("uid exists");
 
-            // set parent's child to the current uid
+            // add the current uid to parent's children
             parent.children.insert(uid);
 
             // include this parent as an ancestor
@@ -213,7 +215,7 @@ impl Cluster for Auditor {
         // set this tx's ancestors
         let tx = self.pool.get_mut(&uid).expect("uid exists");
         tx.ancestors = ancestors;
-        tx.relatives_set = true;
+        tx.links_set = true;
     }
 }
 
@@ -304,7 +306,7 @@ mod test {
         let pool = pool_from(entries);
         let mut auditor = Auditor::from(pool);
         for uid in 0..9 {
-            auditor.set_relatives(uid);
+            auditor.set_links(uid);
         }
 
         // max depth 3

@@ -56,7 +56,7 @@ pub trait Audit {
 
 /// Trait for types capable of linking groups of related mempoool transactions
 pub trait Cluster {
-    fn set_relatives(&mut self, uid: usize);
+    fn set_links(&mut self, uid: usize);
 }
 
 /// Computes the number of dust-producting transactions in the given block. Note that

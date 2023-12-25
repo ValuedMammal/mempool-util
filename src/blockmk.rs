@@ -137,10 +137,11 @@ impl<S: std::hash::BuildHasher> Audit
 }
 
 impl Cluster for BlockAssembler {
-    /// Recursively walks in-mempool ancestors of `uid`, setting children and recording ancestor data
-    fn set_relatives(&mut self, uid: usize) {
+    /// Recursively walks in-mempool ancestors of `uid`, setting ancestor/descendant links
+    /// and computes the ancestor score.
+    fn set_links(&mut self, uid: usize) {
         let tx = self.pool.get(&uid).expect("uid exists");
-        if tx.relatives_set {
+        if tx.links_set {
             return;
         }
 
@@ -151,10 +152,11 @@ impl Cluster for BlockAssembler {
         // get ancestor uid's for this tx
         let mut ancestors: HashSet<usize> = HashSet::new();
         for parent_id in parents {
-            self.set_relatives(parent_id); // recursive
+            /* recursive step */
+            self.set_links(parent_id);
             let parent = self.pool.get_mut(&parent_id).expect("uid exists");
 
-            // set parent's child to the current uid
+            // add this uid to the parent's children
             parent.children.insert(uid);
 
             // include this parent as an ancestor
@@ -184,7 +186,7 @@ impl Cluster for BlockAssembler {
         tx.ancestor_weight += ancestor_weight;
         //tx.ancestor_sigops += ancestor_sigops;
         tx.score = tx.ancestor_fee as f64 / (tx.ancestor_weight as f64 / 4.0);
-        tx.relatives_set = true;
+        tx.links_set = true;
     }
 }
 
@@ -324,7 +326,7 @@ impl BlockAssembler {
     fn generate(mut self) -> Vec<BlockSummary> {
         let start = time::Instant::now();
         for uid in 0..self.pool.len() {
-            self.set_relatives(uid);
+            self.set_links(uid);
         }
 
         // Sort by ancestor score (ascending), and create a stack of uids
@@ -699,7 +701,7 @@ mod test {
     }
 
     #[test]
-    fn test_set_relatives() {
+    fn test_set_links() {
         let ancestor = 0usize;
         let parent = 1usize;
         let child = 2usize;
@@ -714,7 +716,7 @@ mod test {
             .into_pool()
             .1,
         );
-        maker.set_relatives(gchild);
+        maker.set_links(gchild);
 
         // all children have at least one ancestor
         for uid in 1..4 {
@@ -752,7 +754,7 @@ mod test {
             .into_pool()
             .1,
         );
-        maker.set_relatives(child);
+        maker.set_links(child);
 
         // Ancestor removed from descendant's ancestors
         let ancestor_id = 0usize;
