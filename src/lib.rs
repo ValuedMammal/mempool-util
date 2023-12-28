@@ -1,6 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
+use bitcoin::Amount;
 use bitcoin::Txid;
 
 pub use {
@@ -38,6 +39,9 @@ mod macros {
         )
     );
 }
+
+/// Block subsidy
+pub const SUBSIDY: f64 = 6.25;
 
 /// An approximation of the dust level for a transaction.
 /// The library defines dust as 3x the minimum transaction vsize
@@ -191,6 +195,17 @@ pub fn block_audit(block: &bitcoin::Block, projected: &[Txid]) -> f64 {
     ((num_actual - num_unseen) / num_actual).trunc_three() * 100.0
 }
 
+/// Returns block subsidy from the given `height`
+pub fn subsidy(height: u32) -> Amount {
+    // see bitcoin/src/validation.cpp#GetBlockSubsidy
+    let nhalvings = height / bitcoin::blockdata::constants::SUBSIDY_HALVING_INTERVAL;
+    if nhalvings >= 64 {
+        return Amount::ZERO;
+    }
+    let subsidy = 50.0 / 2u32.pow(nhalvings) as f64;
+    Amount::from_btc(subsidy).expect("parse Amount")
+}
+
 #[derive(Debug)]
 pub struct TestMempoolEntry {
     pub uid: usize,
@@ -334,5 +349,21 @@ mod test {
 
         //TODO
         //assert!(tx.is_consensus_valid());
+    }
+
+    #[test]
+    fn subsidy_from_height() {
+        let heights_expected_subsidy = vec![
+            (1_u32, 50.0_f64),
+            (210_000, 25.0),
+            (420_000, 12.5),
+            (630_000, 6.25),
+            (840_000, 3.125),
+        ];
+
+        for case in heights_expected_subsidy {
+            let expect = Amount::from_btc(case.1).unwrap();
+            assert_eq!(subsidy(case.0), expect);
+        }
     }
 }

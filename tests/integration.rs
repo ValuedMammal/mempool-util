@@ -18,6 +18,21 @@ fn block_generate() {
     assert!(!output.stdout.is_empty());
 }
 
+#[test]
+fn test_subsidy() {
+    use bitcoincore_rpc::{Auth, Client, RpcApi};
+    // Check the subsidy we have hardcoded matches consensus.
+    let client = Client::new(
+        "127.0.0.1:8332",
+        Auth::UserPass(USER.to_string(), PASS.to_string()),
+    )
+    .unwrap();
+
+    let height = client.get_block_count().unwrap();
+    let computed = mempool::subsidy(height as u32);
+    assert_eq!(computed.to_btc(), mempool::SUBSIDY);
+}
+
 /** Sigops tests. The following tests use mainnet tx.
  * Note: we need a full node with -txindex in order to query arbitrary txs. */
 #[test]

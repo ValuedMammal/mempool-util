@@ -44,7 +44,8 @@ impl Auditor {
     /// an ancestor, an entry must have direct descendants while having no ancestors
     /// of its own.
     fn ancestors(&self) -> Option<Vec<&Entry>> {
-        let res: Vec<&Entry> = self.pool
+        let res: Vec<&Entry> = self
+            .pool
             .values()
             .filter(|tx| tx.ancestors.is_empty() && !tx.children.is_empty())
             .collect();
@@ -52,7 +53,7 @@ impl Auditor {
         if res.is_empty() {
             return None;
         }
-        
+
         Some(res)
     }
 }
