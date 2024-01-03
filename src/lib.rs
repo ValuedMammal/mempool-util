@@ -63,7 +63,7 @@ pub trait Cluster {
     fn set_links(&mut self, uid: usize);
 }
 
-/// Computes the number of dust-producting transactions in the given block. Note that
+/// Computes the number of dust-producing transactions in the given block. Note that
 /// the function defines dust as 2x the normal [`DUST_LIMIT`].
 pub fn check_dust_pruned(block: &bitcoin::Block) -> Option<(usize, usize)> {
     let mut dust_outputs = 0usize;
@@ -91,7 +91,7 @@ pub fn check_dust_pruned(block: &bitcoin::Block) -> Option<(usize, usize)> {
     None
 }
 
-/// Computes the number of dust-producting transactions in the given block along with
+/// Computes the number of dust-producing transactions in the given block along with
 /// the fraction of total block weight attributable to dust.
 ///
 /// ## Errors
