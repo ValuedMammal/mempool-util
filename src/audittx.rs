@@ -19,7 +19,7 @@ pub struct AuditTx {
     pub score: f64,
     pub used: bool,
     pub modified: bool,
-    pub dependency_rate: f64,
+    pub descendant_score: f64,
     pub links_set: bool,
 }
 
@@ -41,7 +41,7 @@ impl Default for AuditTx {
             score: 0.0,
             used: false,
             modified: false,
-            dependency_rate: f64::INFINITY,
+            descendant_score: f64::INFINITY,
             links_set: false,
         }
     }

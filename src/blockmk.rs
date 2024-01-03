@@ -372,7 +372,7 @@ impl BlockAssembler {
             // Check if this package fits, or if we're done building blocks, continue on packages until queues empty
             if self.test_package_fits(tx) || self.blocks.len() >= BLOCK_GOAL {
                 let package = self.add_package_tx(tx);
-                let effective_feerate = tx.dependency_rate.min(tx.score);
+                let effective_feerate = tx.descendant_score.min(tx.score);
                 for uid in package {
                     let tx = self.pool.get(&uid).expect("uid exists");
                     if !tx.children.is_empty() {
@@ -458,7 +458,7 @@ impl BlockAssembler {
             // Remove root tx as ancestor
             // skip if tx already in block
             if tx.ancestors.remove(&uid) {
-                tx.dependency_rate = tx.dependency_rate.min(effective_feerate);
+                tx.descendant_score = tx.descendant_score.min(effective_feerate);
                 tx.ancestor_fee -= root_fee;
                 tx.ancestor_weight -= root_weight;
                 //tx.ancestor_sigops -= root_sigops;
