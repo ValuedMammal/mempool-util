@@ -10,6 +10,8 @@ fn block_generate() {
     let output = Command::new(PROG)
         .env("RPC_USER", USER)
         .env("RPC_PASS", PASS)
+        .arg("-n")
+        .arg("bitcoin")
         .arg("fee")
         .arg("report")
         .output()
