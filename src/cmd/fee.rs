@@ -1,10 +1,13 @@
-use super::*;
-use crate::cli::FeeSubCmd;
+use serde_json::json;
+use serde::Serialize;
+use std::time;
+
 use mempool::blockmk::{self, BlockSummary, FeeHistogram};
 use mempool::cluster;
 use mempool::Percent;
-use serde::Serialize;
-use serde_json::json;
+
+use super::*;
+use crate::cli::FeeSubCmd;
 
 /// Format for logging fee report result json
 #[derive(Debug, Serialize)]
@@ -18,7 +21,7 @@ struct FeeReportResult {
 pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
     match subcmd {
         // Collect fee data from mempool
-        FeeSubCmd::Report { quiet } => {
+        FeeSubCmd::Report { quiet, check } => {
             // get raw mempool
             let height = core.get_block_count()?;
             let next_height = height + 1;
@@ -29,9 +32,11 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
             }
 
             // generate blocks, validate result
+            let raw_mempool_count = raw_mempool.len();
             let blocks = blockmk::audit_fees(next_height, raw_mempool);
-            //let raw_mempool_count = raw_mempool.len();
-            //validate_result(raw_mempool_count, &blocks);
+            if check {
+                validate_result(raw_mempool_count, &blocks);
+            }
 
             if quiet {
                 // log output only
@@ -167,9 +172,10 @@ fn draw_histogram(histogram: &FeeHistogram) {
 }
 
 /// Make sure all mempool tx are accounted for with no duplicates
-#[allow(unused)]
 fn validate_result(raw_mempool_count: usize, blocks: &[BlockSummary]) {
-    // ideally, this check can be moved to integration tests when the library stabilizes.
+    log::debug!("Validating results for {} entries", raw_mempool_count);
+    let now = time::Instant::now();
+
     let mut total_block_tx: Vec<&usize> =
         blocks.iter().flat_map(|block| block.txn.iter()).collect();
     let total_tx_count = total_block_tx.len();
@@ -183,4 +189,5 @@ fn validate_result(raw_mempool_count: usize, blocks: &[BlockSummary]) {
     if total_tx_count > sorted_len {
         log::warn!("{} tx double counted!", total_tx_count - sorted_len);
     }
+    log::debug!("Checks completed in {}ms", now.elapsed().as_millis());
 }

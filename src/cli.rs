@@ -39,6 +39,9 @@ pub enum FeeSubCmd {
         /// Don't print to stdout
         #[clap(long, short = 'q')]
         quiet: bool,
+        /// Check result for correctness, useful for testing
+        #[clap(long, short = 'c')]
+        check: bool,
     },
     /// Tx prioritisation deltas
     Delta,
