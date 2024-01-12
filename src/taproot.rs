@@ -23,7 +23,7 @@ pub fn tr_txo_count(block: bitcoin::Block) -> usize {
         .txdata
         .into_iter()
         .flat_map(|tx| tx.output.into_iter())
-        .filter(|txo| txo.script_pubkey.is_v1_p2tr())
+        .filter(|txo| txo.script_pubkey.is_p2tr())
         .collect();
 
     txos.len()

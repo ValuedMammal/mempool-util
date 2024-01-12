@@ -93,7 +93,7 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
             // Get raw tx info and crunch sigops
             let pause = txs.len() > 1;
             for tx in txs {
-                if tx.is_coin_base() {
+                if tx.is_coinbase() {
                     continue;
                 }
                 let Ok(tx_info) = core.get_raw_transaction_info_verbose(&tx.txid(), None) else {
@@ -135,10 +135,10 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
             let coinbase = block
                 .txdata
                 .iter()
-                .find(|tx| tx.is_coin_base())
+                .find(|tx| tx.is_coinbase())
                 .expect("find coinbase");
             let subsidy = Amount::from_btc(SUBSIDY).expect("Amount from subsidy");
-            let txout_sum: u64 = coinbase.output.iter().map(|txo| txo.value).sum();
+            let txout_sum: u64 = coinbase.output.iter().map(|txo| txo.value.to_sat()).sum();
             let block_fees: f64 =
                 Amount::from_sat(txout_sum.saturating_sub(subsidy.to_sat())).to_btc();
 

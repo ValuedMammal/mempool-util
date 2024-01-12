@@ -71,12 +71,12 @@ pub fn check_dust_pruned(block: &bitcoin::Block) -> Option<(usize, usize)> {
     let txs = &block.txdata;
     for tx in txs {
         let mut is_dust = false;
-        if tx.is_coin_base() {
+        if tx.is_coinbase() {
             continue;
         }
         for txo in &tx.output {
             let spk = txo.script_pubkey.as_script();
-            if txo.value <= 2 * DUST_LIMIT && !spk.is_op_return() {
+            if txo.value.to_sat() <= 2 * DUST_LIMIT && !spk.is_op_return() {
                 is_dust = true;
                 dust_outputs += 1;
             }
@@ -116,7 +116,7 @@ pub fn check_dust_full(block: &bitcoin::Block, core: &Client) -> Result<(usize, 
     let mut dust_tx_count = 0usize;
 
     for tx in &block.txdata {
-        if tx.is_coin_base() {
+        if tx.is_coinbase() {
             continue;
         }
         let tx_wu = tx.weight().to_wu();
@@ -134,7 +134,7 @@ pub fn check_dust_full(block: &bitcoin::Block, core: &Client) -> Result<(usize, 
         let mut txo_value = 0u64;
         let mut tx_dust_amt = 0u64;
         for txo in &tx.output {
-            let amt = txo.value;
+            let amt = txo.value.to_sat();
             txo_value += amt;
             let spk = txo.script_pubkey.as_script();
             if amt <= 2 * DUST_LIMIT && !spk.is_op_return() {
@@ -176,7 +176,7 @@ pub fn block_audit(block: &bitcoin::Block, projected: &[Txid]) -> f64 {
         .txdata
         .iter()
         .filter_map(|tx| {
-            if !tx.is_coin_base() {
+            if !tx.is_coinbase() {
                 Some(tx.txid())
             } else {
                 None
@@ -244,6 +244,7 @@ mod test {
     use bitcoin::consensus::encode::deserialize;
     use bitcoin::Block;
     use bitcoin::OutPoint;
+    use bitcoin::transaction;
     use bitcoin::Transaction;
     use bitcoin::TxIn;
 
@@ -289,7 +290,7 @@ mod test {
         // Not actually a test, just a nice exercise
         // Note: to validate a tx, we need feature "bitcoinconsensus" from crate bitcoin
         let tx = Transaction {
-            version: 2,
+            version: transaction::Version::TWO,
             lock_time: LockTime::from_consensus(810_000),
             input: vec![
                 TxIn {
@@ -310,7 +311,7 @@ mod test {
                 )
             ]
         };
-        let amt = tx.output[0].value;
+        let amt = tx.output[0].value.to_sat();
         //dbg!(amt);
         assert!(amt <= DUST_LIMIT);
 
@@ -334,14 +335,14 @@ mod test {
             }
         ];
         let vout = vec![TxOut {
-            value: 13_220_000,
+            value: Amount::from_sat(13_220_000),
             script_pubkey: ScriptBuf::from_hex(
                 "76a914645e1f9be127080712ae9cd36fb2e65b3121060088ac",
             )
             .unwrap(),
         }];
         let _tx = Transaction {
-            version: 1,
+            version: transaction::Version::ONE,
             lock_time: locktime,
             input: vin,
             output: vout,
