@@ -11,7 +11,7 @@ pub use {
     std::collections::{HashMap, HashSet},
     util::{
         compare_ancestor_count, compare_audit_tx, key_index, median_from_sorted, target_feerate,
-        try_from_value, Percent,
+        try_from_value,
     },
 };
 
@@ -25,18 +25,28 @@ pub mod util;
 
 mod macros {
     #[macro_export]
-    /// Returns bytes from a hex string. See crate [hex-conservative](https://docs.rs/hex-conservative/)
+    /// Returns bytes from a hex string. See crate [hex-conservative](https://docs.rs/hex-conservative/).
     macro_rules! hex (
         ($hex:expr) => (
             <Vec<u8> as bitcoin::hashes::hex::FromHex>::from_hex($hex).unwrap()
         )
     );
+
     #[macro_export]
-    /// Creates a bitcoin hash from a literal
+    /// Creates a bitcoin hash from a literal.
     macro_rules! hash (
         ($input:expr) => (
             bitcoin::hashes::Hash::hash($input.as_bytes())
         )
+    );
+
+    #[macro_export]
+    /// Truncate to 3 decimal places.
+    macro_rules! truncate (
+        ($n:expr) => ({
+            let val = ($n as f64 * 1000.0).floor();
+            val / 1000.0
+        })
     );
 }
 
@@ -158,9 +168,9 @@ pub fn check_dust_full(block: &bitcoin::Block, core: &Client) -> Result<(usize, 
         thread::sleep(Duration::from_millis(100));
     }
 
-    let dust_ratio = (dust_wu as f64 / block_wu as f64).trunc_three();
+    let dust_ratio = dust_wu as f64 / block_wu as f64;
 
-    Ok((dust_outputs, dust_tx_count, dust_ratio))
+    Ok((dust_outputs, dust_tx_count, truncate!(dust_ratio)))
 }
 
 /// Scores a newly connected block on its similarity to a given set of txids
@@ -192,7 +202,8 @@ pub fn block_audit(block: &bitcoin::Block, projected: &[Txid]) -> f64 {
     let num_unseen = txids.len() as f64;
 
     // find score
-    ((num_actual - num_unseen) / num_actual).trunc_three() * 100.0
+    let score = (num_actual - num_unseen) / num_actual;
+    truncate!(score) * 100.0
 }
 
 /// Returns block subsidy from the given `height`

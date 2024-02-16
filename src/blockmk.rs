@@ -299,14 +299,15 @@ impl BlockAssembler {
                 .scores
                 .sort_by(|a, b| a.partial_cmp(b).expect("sort f64"));
             let scores = &self.inv.scores;
-            median_effective_feerate = Some(median_from_sorted(scores));
             fee_cutoff = Some(target_feerate(scores));
+            median_effective_feerate = Some(median_from_sorted(scores));
         }
 
-        let fee_range = (
-            self.inv.lo_score.trunc_three(),
-            self.inv.hi_score.trunc_three(),
-        );
+        let fee_range = {
+            let lo = truncate!(self.inv.lo_score);
+            let hi = truncate!(self.inv.hi_score);
+            (lo, hi)
+        };
 
         BlockSummary {
             height,

@@ -4,7 +4,7 @@ use std::time;
 
 use mempool::blockmk::{self, BlockSummary, FeeHistogram};
 use mempool::cluster;
-use mempool::Percent;
+use mempool::truncate;
 
 use super::*;
 use crate::cli::FeeSubCmd;
@@ -49,7 +49,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
                     if let Some(smart_fee) = smart_fee_res.fee_rate {
                         let mut smart_fee = smart_fee.to_btc(); // btc/kvb
                         smart_fee *= 1e5_f64; // sat/vb
-                        let delta = target_fee - smart_fee;
+                        let delta = truncate!(target_fee - smart_fee);
                         let res = FeeReportResult {
                             delta,
                             smart_fee,
@@ -87,7 +87,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
                 if let Some(smart_fee) = smart_fee_res.fee_rate {
                     let mut smart_fee = smart_fee.to_btc(); // btc/kvb
                     smart_fee *= 1e5_f64; // sat/vb
-                    let delta = (target_fee - smart_fee).trunc_three();
+                    let delta = truncate!(target_fee - smart_fee);
 
                     res.insert("core_smart_fee".to_string(), json!(smart_fee));
                     res.insert("auction_delta".to_string(), json!(delta));
@@ -156,7 +156,7 @@ fn draw_histogram(histogram: &FeeHistogram) {
     let sum_block_wu = histogram.iter().fold(0, |acc, (_, wu)| acc + wu);
 
     for (bucket, wu) in histogram {
-        let freq = (*wu as f64 / sum_block_wu as f64).trunc_three();
+        let freq = truncate!(*wu as f64 / sum_block_wu as f64);
         let max_bar_len = 30.0;
         let normalized_count = (freq * max_bar_len) as u32;
         print!("{bucket:7}|");

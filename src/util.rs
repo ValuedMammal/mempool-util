@@ -33,23 +33,11 @@ where
     None
 }
 
-/// for numerical types formattable to two decimals
-pub trait Percent {
-    fn trunc_three(self) -> Self;
-}
-
-impl Percent for f64 {
-    /// Truncate to 3 significant figures
-    fn trunc_three(self) -> Self {
-        let val = (self * 1000.0).floor();
-        val / 1000.0
-    }
-}
-
-/// Computes the median value from a sorted sequence
+/// Computes the median value from a sorted sequence.
 ///
 /// ## Panics
-/// If scores is empty
+///
+/// If `seq` is empty
 pub fn median_from_sorted(seq: &[f64]) -> f64 {
     assert!(!seq.is_empty());
     if seq.len() % 2 == 0 {
@@ -57,24 +45,33 @@ pub fn median_from_sorted(seq: &[f64]) -> f64 {
         let lhs = (seq.len() / 2) - 1;
         let rhs = seq.len() / 2;
         let feerate = (seq[lhs] + seq[rhs]) / 2.0;
-        feerate.trunc_three()
+        truncate!(feerate)
     } else {
         // length odd
         let mid = (seq.len() - 1) / 2;
         let feerate = seq[mid];
-        feerate.trunc_three()
+        truncate!(feerate)
     }
 }
 
-/// Returns the value at the 90%-ile from a sorted sequence
+/// Returns the first element of a sorted list.
+///
+/// In practice, this value represents the lowest ancestor score that was selected
+/// for inclusion in the next block. This is significant because the 1-2 block boundary
+/// is the most likely place for an auction to develop, as participants bid to get
+/// into the next block.
+///
+/// The reason this is a dedicated function is that it used to contain more logic,
+/// when the target rate was defined as the 90%-ile of a list, but the definition
+/// has since been simplified. If the definition of target feerate changes again
+/// in the future, then this is where it will happen.
 ///
 /// ## Panics
-/// If scores is empty
+///
+/// If `seq` is empty
 pub fn target_feerate(seq: &[f64]) -> f64 {
     assert!(!seq.is_empty());
-    let largest_index = seq.len() - 1;
-    let i = (largest_index as f64 * 0.9).trunc() as usize;
-    seq[i].trunc_three()
+    truncate!(seq[0])
 }
 
 /// `a` and `b` as (score, order, uid)
@@ -101,26 +98,4 @@ pub fn compare_ancestor_count(a: &(usize, u32, usize), b: &(usize, u32, usize)) 
         // fallback to uid
         a.2.cmp(&b.2)
     }
-}
-
-#[test]
-fn finds_ninety_percentile() {
-    let mut scores = vec![];
-    for i in 1..=10 {
-        scores.push(i as f64);
-    }
-
-    let res = target_feerate(&scores);
-    assert_eq!(res, 9.0);
-
-    scores = vec![0.0];
-    let res = target_feerate(&scores);
-    assert_eq!(res, 0.0);
-}
-
-#[test]
-#[should_panic]
-fn ninety_percentile_fails_empty_vec() {
-    let empty = vec![];
-    let _res = target_feerate(&empty);
 }
