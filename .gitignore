@@ -1,0 +1,18 @@
+# Cargo
+/target
+*.lock
+
+# Directories
+assets/
+contrib/*.csv
+doc/
+
+# file extensions
+*.txt
+*.log
+*.json
+*.dat
+
+# justfile
+justfile
+
