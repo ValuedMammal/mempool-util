@@ -54,26 +54,6 @@ pub fn median_from_sorted(seq: &[f64]) -> f64 {
     }
 }
 
-/// Returns the first element of a sorted list.
-///
-/// In practice, this value represents the lowest ancestor score that was selected
-/// for inclusion in the next block. This is significant because the 1-2 block boundary
-/// is the most likely place for an auction to develop, as participants bid to get
-/// into the next block.
-///
-/// The reason this is a dedicated function is that it used to contain more logic,
-/// when the target rate was defined as the 90%-ile of a list, but the definition
-/// has since been simplified. If the definition of target feerate changes again
-/// in the future, then this is where it will happen.
-///
-/// ## Panics
-///
-/// If `seq` is empty
-pub fn target_feerate(seq: &[f64]) -> f64 {
-    assert!(!seq.is_empty());
-    truncate!(seq[0])
-}
-
 /// `a` and `b` as (score, order, uid)
 pub fn compare_audit_tx(a: (f64, u32, usize), b: (f64, u32, usize)) -> Option<Ordering> {
     if (a.0 - b.0).abs() > f64::EPSILON {

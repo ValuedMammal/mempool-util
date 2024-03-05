@@ -64,9 +64,6 @@ pub struct BlockSummary {
     pub fees: f64,
     /// Feerate range (effective)
     pub fee_range: (f64, f64),
-    /// Fee cutoff, i.e. the 90%-ile effective feerate
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub fee_cutoff: Option<f64>,
     /// Median effective feerate
     #[serde(skip_serializing_if = "Option::is_none")]
     pub median_effective_feerate: Option<f64>,
@@ -290,7 +287,6 @@ impl BlockAssembler {
         let mut height: Option<u64> = None;
         let mut fee_histogram: Option<FeeHistogram> = None;
         let mut median_effective_feerate: Option<f64> = None;
-        let mut fee_cutoff: Option<f64> = None;
 
         if is_full {
             height = Some(self.next_height);
@@ -299,7 +295,6 @@ impl BlockAssembler {
                 .scores
                 .sort_by(|a, b| a.partial_cmp(b).expect("sort f64"));
             let scores = &self.inv.scores;
-            fee_cutoff = Some(target_feerate(scores));
             median_effective_feerate = Some(median_from_sorted(scores));
         }
 
@@ -318,7 +313,6 @@ impl BlockAssembler {
             failures: self.inv.failures,
             fee_range,
             median_effective_feerate,
-            fee_cutoff,
             fee_histogram,
         }
     }

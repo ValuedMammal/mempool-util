@@ -41,10 +41,9 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
             if quiet {
                 // log output only
                 if blocks.len() > 1 {
-                    let target_fee = blocks[0].fee_cutoff.expect("fee cutoff is some");
-
                     // get core smart fee (conf target 2)
-                    // and find `delta = (fee_cutoff - smart_fee)`
+                    // and find `delta = (target_fee - smart_fee)`
+                    let target_fee = blocks[0].median_effective_feerate.unwrap();
                     let smart_fee_res = core.estimate_smart_fee(2, None)?;
                     if let Some(smart_fee) = smart_fee_res.fee_rate {
                         let mut smart_fee = smart_fee.to_btc(); // btc/kvb
@@ -80,9 +79,8 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
                 let mut histogram = blocks[0].fee_histogram.expect("fee histogram is some");
 
                 // get core smart fee (conf target 2)
-                // and find `delta = (fee_cutoff - smart_fee)`
-                let target_fee = blocks[0].fee_cutoff.expect("fee cutoff is some");
-
+                // and find `delta = (target_fee - smart_fee)`
+                let target_fee = blocks[0].median_effective_feerate.unwrap();
                 let smart_fee_res = core.estimate_smart_fee(2, None)?;
                 if let Some(smart_fee) = smart_fee_res.fee_rate {
                     let mut smart_fee = smart_fee.to_btc(); // btc/kvb

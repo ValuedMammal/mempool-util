@@ -10,8 +10,7 @@ pub use {
     error::Result,
     std::collections::{HashMap, HashSet},
     util::{
-        compare_ancestor_count, compare_audit_tx, key_index, median_from_sorted, target_feerate,
-        try_from_value,
+        compare_ancestor_count, compare_audit_tx, key_index, median_from_sorted, try_from_value,
     },
 };
 
