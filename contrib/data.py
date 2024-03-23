@@ -8,30 +8,27 @@ import sys
 
 """
 Parses a log with records resembling the following:
-    2023-10-16T12:53:38.657Z INFO  mempool > {"block_fees":0.21,"block_score":45.8,"hash":"000000000000000000022b4f8a6a1eb8a9779e74ae1e72a68ae2f7b391e2a7c1"}
+    2024-01-27T17:34:39.274Z INFO  mempool::cmd::audit > {"block_fees":0.28546789,"block_score":83.8,"hash":"000000000000000000004460ffcfa47523eb5ea9f917469705ca074de39a26c5"}
 
 First, compute the time between consecutive entries, indicating the time elapsed between blocks.
-Throw out any entries for which the block time is less than the configured block template interval *and*
-no refresh occurred in the interim. For example, if we run Core's `getblocktemplate` at 5min intervals
-starting at 00:00, and we see block 1 at 00:01 and block 2 at 00:02, we throw out the score for block 2, as
-we'd be working from a stale template. However, if we see block 1 at 00:03 and block 2 at 00:06, we keep
-both entries despite the block time being less than the template interval, as presumably a new
-template would have been run at 00:05.
+Throw out any entries for which the block time is less than the configured block template interval.
+For example, if we run Core's `getblocktemplate` at 3min intervals starting at 00:00, and we see
+block 1 at 00:01 and block 2 at 00:02, we throw out the score for block 2, as we'd be working from
+a stale template.
 
-Finally, compute the average, median, mode, and standard deviation of block score. A robust dataset
-should include at least 1000 entries.
+Finally, compute the average, median, mode, and standard deviation of block score.
 
 Usage: python3 data.py path/to/input.log path/to/output.csv
 """
 
 # Block template refresh interval
-INTERVAL = 5
+INTERVAL = 3
 INTERVAL_SECS = INTERVAL * 60
 
 # Regex patterns for capturing datetimes and block scores
 RE_DATETIME = re.compile("^.*([\d]{4})-([\d]{2})-([\d]{2})T([\d]{2}):([\d]{2}):([\d]{2}).([\d]{3}).*$")
 RE_BLOCK_HASH = re.compile('^.*"hash":"([0-9a-f]{64})".*$')
-RE_SCORE = re.compile('^.*"block_fees":([\d.]+),"block_score":([\d.]+).*$')
+RE_FEES_SCORE = re.compile('^.*"block_fees":([\d.]+),"block_score":([\d.]+).*$')
 
 # Setup console logger
 log = logging.getLogger('my data')
@@ -98,7 +95,7 @@ def parse_input(records: list[str]) -> list[dict]:
         # Match fees + score
         fees = None
         score = None
-        match = RE_SCORE.search(ln)
+        match = RE_FEES_SCORE.search(ln)
         if match is not None:
             fees = float(match.group(1))
             score = float(match.group(2))
@@ -130,7 +127,7 @@ def validate(table: list[dict]) -> list[str]:
     
     block_scores: list[float] = []
     for (i, row) in enumerate(table):
-        # collect first row, but skip computing blocktime
+        # Collect first row, but skip computing blocktime
         fees = row["fees"]
         score = row["score"]
         hash = row["hash"]
@@ -140,39 +137,18 @@ def validate(table: list[dict]) -> list[str]:
                 block_scores.append(score)
             continue
 
-        valid = True
+        # Filter invalid
         prev_row = table[i-1]
         t0 = prev_row["timestamp"]
         t1 = row["timestamp"]
         elapsed = t1 - t0
         elapsed_min = round((elapsed / 60.0), 2)
-        if elapsed < INTERVAL_SECS:
-            valid = False
-            # Toss the entry, unless the duration includes a multiple of 5, which we test
-            # by finding the range (prev_min, cur_min], and checking whether any of the
-            # intervening minutes modulo `INTERVAL` is 0.
-            #
-            # Some edge cases:
-            # - Check for and allow the case where a new hour has passed.
-            # - Disallow case where two blocks arrive in the same minute.
-            #
-            # If `valid` is false, drop this row's score, but keep the previous
-            m0 = prev_row["datetime"].minute
-            m1 = row["datetime"].minute
-            if m0 > m1:
-                # passed new hour
-                valid = True
-            elif m0 < m1:
-                for m in range(m0 + 1, m1 + 1):
-                    if m % INTERVAL == 0:
-                        valid = True
-                        break
-        if valid:
+        if elapsed > INTERVAL_SECS:
             out_lines.append(f"{elapsed_min},{fees},{score},{hash}\n")
             if score is not None:
                 block_scores.append(score)
         #else:
-        #   log.debug(f"dropping record with range: ({m0}-{m1})")
+          #log.debug(f"dropping record with blocktime: {elapsed}")
     
     build_result(block_scores, raw_len)
     return out_lines
@@ -180,7 +156,7 @@ def validate(table: list[dict]) -> list[str]:
 
 def build_result(scores: list[float], raw_len: int):
     """Crunch stats"""
-    valid_ln = len(scores)
+    scores_ct = len(scores)
     avg_score = round(mean(scores), 1)
     med_score = round(median(scores), 1)
     var_score = variance(scores, avg_score)
@@ -190,8 +166,8 @@ def build_result(scores: list[float], raw_len: int):
     mode_score = mode(scores)
 
     res = {
-        "total": raw_len,
-        "valid": valid_ln,
+        "raw_count": raw_len,
+        "count": scores_ct,
         "min score": min_score,
         "max score": max_score,
         "median score": med_score,
