@@ -103,7 +103,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
                 println!("{}", serde_json::to_string_pretty(&res)?);
                 draw_histogram(&histogram);
             }
-        },
+        }
         // Get fee deltas for current mempool
         FeeSubCmd::Delta => {
             // get raw mempool verbose
@@ -132,7 +132,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
             if let Some(tx) = tx {
                 println!("Highest prioritised tx: {tx}");
             }
-        },
+        }
         FeeSubCmd::Cluster => {
             let raw_mempool = core.get_raw_mempool_verbose()?;
             if raw_mempool.is_empty() {
@@ -142,7 +142,7 @@ pub fn execute(core: &Client, subcmd: FeeSubCmd) -> Result<()> {
 
             let res = cluster::analyze(raw_mempool);
             println!("{}", serde_json::to_string_pretty(&res)?);
-        },
+        }
     }
     Ok(())
 }

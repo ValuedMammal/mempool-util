@@ -66,7 +66,7 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
             println!("Height: {height}");
             println!("{} total tx", block.txdata.len());
             println!("{result}");
-        },
+        }
         // Crunch sigops for a block or tx
         AuditSubCmd::Sigops { block, txid } => {
             let mut sigops = 0_u32;
@@ -107,7 +107,7 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
             }
 
             println!("Sigops cost: {sigops}");
-        },
+        }
         // Compare the new tip with what was projected
         AuditSubCmd::Block { hash } => {
             // Get projected txids
@@ -156,7 +156,7 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
                 hash,
             };
             log::info!("{}", serde_json::to_string(&obj)?);
-        },
+        }
     }
 
     Ok(())

@@ -40,17 +40,17 @@ pub fn get_sigops_count(tx: &GetRawTransactionResult) -> u32 {
                         let redeem_script = parse_p2sh_redeem_script(&scriptsig.asm);
                         script_sigops_count(&redeem_script.to_asm_string()) * SEGWIT_SCALAR
                     }
-                },
+                }
                 ScriptPubkeyType::Witness_v0_KeyHash => 1,
                 ScriptPubkeyType::Witness_v0_ScriptHash | ScriptPubkeyType::Witness_Unknown => {
                     let script = script_try_from_witness(&input.txinwitness).unwrap_or_default();
                     script_sigops_count(&script.to_asm_string())
-                },
+                }
                 ScriptPubkeyType::Pubkey | ScriptPubkeyType::PubkeyHash => SEGWIT_SCALAR,
                 ScriptPubkeyType::MultiSig | ScriptPubkeyType::Nonstandard => {
                     let prevout_spk = &prevout.script_pub_key;
                     script_sigops_count_raw(&prevout_spk.asm)
-                },
+                }
                 // ScriptPubkeyType::Witness_v1_Taproot
                 // ScriptPubkeyType::NullData
                 _ => 0,

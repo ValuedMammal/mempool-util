@@ -336,32 +336,32 @@ impl BlockAssembler {
             let tx = match (&next_tx, &next_modified_tx) {
                 (None, None) => {
                     break;
-                },
+                }
                 (None, Some(modtx)) => {
                     self.modified.pop();
                     modtx
-                },
+                }
                 (Some(tx), None) => {
                     pool_stack.pop();
                     tx
-                },
+                }
                 (Some(tx), Some(modtx)) => {
                     match tx.cmp(modtx) {
                         Ordering::Equal => {
                             self.modified.pop();
                             pool_stack.pop(); // drop duplicates
                             modtx
-                        },
+                        }
                         Ordering::Less => {
                             self.modified.pop();
                             modtx
-                        },
+                        }
                         Ordering::Greater => {
                             pool_stack.pop();
                             tx
-                        },
+                        }
                     }
-                },
+                }
             };
 
             // Check if this package fits, or if we're done building blocks, continue on packages until queues empty

@@ -18,7 +18,7 @@ pub fn execute(core: &Client, subcmd: TaprootSubCmd) -> Result<()> {
             let hash = core.get_block_hash(height)?;
             let block = core.get_block(&hash)?;
             println!("{} p2tr outputs", taproot::tr_txo_count(block));
-        },
+        }
         // Count ord tx
         TaprootSubCmd::Ord(block) => {
             let height = if block.height.is_none() {
@@ -32,7 +32,7 @@ pub fn execute(core: &Client, subcmd: TaprootSubCmd) -> Result<()> {
                 "{} tx matching the \"ord\" pattern",
                 taproot::tr_ord_count(block)
             );
-        },
+        }
         // Display witness elements for a txin
         TaprootSubCmd::Witness { transaction, index } => {
             let tx: Transaction = bitcoin::consensus::deserialize(&hex!(transaction.as_str()))?;
@@ -48,7 +48,7 @@ pub fn execute(core: &Client, subcmd: TaprootSubCmd) -> Result<()> {
                     println!("{}", script.to_asm_string());
                 }
             }
-        },
+        }
     }
 
     Ok(())
