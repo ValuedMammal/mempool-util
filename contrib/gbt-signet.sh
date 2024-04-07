@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-# Run `getblocktemplate` at a regular interval, e.g. 5min
+# Run `getblocktemplate` at a regular interval, e.g. 3min
 # collecting txids and writing to txt file
 
 bcli=$(which bitcoin-cli)
-path="Library/Application Support/Bitcoin/signet/bitcoind.pid"
+path="Library/Application Support/Bitcoin/bitcoind.pid"
 pid="${HOME}/${path}"
 
 # Block template refresh interval
@@ -32,7 +32,7 @@ if [ -f "$pid" ]; then
 
     while true
     do
-        $bcli -signet getblocktemplate '{"rules": ["segwit", "signet"]}' \
+        $bcli getblocktemplate '{"rules": ["segwit"]}' \
             | jq -r '.transactions[].txid' > ~/mempool-util/gbt.txt
         
         sleep $interval_secs;
