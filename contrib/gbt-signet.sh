@@ -9,7 +9,7 @@ path="Library/Application Support/Bitcoin/signet/bitcoind.pid"
 pid="${HOME}/${path}"
 
 # Block template refresh interval
-interval=5
+interval=3
 interval_secs=$((interval * 60))
 
 # Sync local time with interval before starting
