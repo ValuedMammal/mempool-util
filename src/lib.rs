@@ -50,7 +50,7 @@ mod macros {
 }
 
 /// Block subsidy
-pub const SUBSIDY: f64 = 6.25;
+pub const SUBSIDY: f64 = 3.125;
 
 /// An approximation of the dust level for a transaction.
 /// The library defines dust as 3x the minimum transaction vsize
