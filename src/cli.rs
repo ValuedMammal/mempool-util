@@ -27,6 +27,11 @@ pub enum Cmd {
     /// Run tests on a confirmed block
     #[clap(subcommand)]
     Audit(AuditSubCmd),
+    /// Convert bitcoin script hex to asm string
+    Script {
+        #[clap(required = true)]
+        hex: String,
+    },
     /// Stats on Taproot usage
     #[clap(subcommand)]
     Tr(TaprootSubCmd),
@@ -83,15 +88,6 @@ pub enum TaprootSubCmd {
     Outputs(Block),
     /// Scan a block for the "ord" pattern
     Ord(Block),
-    /// Display the witness elements for an input
-    Witness {
-        /// Transaction hex
-        #[clap(required(true))]
-        transaction: String,
-        /// vin index
-        #[clap(required(true))]
-        index: usize,
-    },
 }
 
 /// A required block height

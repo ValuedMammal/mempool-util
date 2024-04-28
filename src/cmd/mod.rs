@@ -15,3 +15,10 @@ pub fn hash(core: &Client) -> Result<()> {
 
     Ok(())
 }
+
+/// Convert bitcoin script hex to asm string
+pub fn parse_script(s: &str) -> Result<()> {
+    let script = bitcoin::ScriptBuf::from_hex(s)?;
+    println!("{}", script.to_asm_string());
+    Ok(())
+}

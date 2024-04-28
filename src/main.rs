@@ -35,6 +35,7 @@ fn main() -> anyhow::Result<()> {
 
     match args.cmd {
         Cmd::Hash => cmd::hash(&core)?,
+        Cmd::Script { hex } => cmd::parse_script(&hex)?,
         Cmd::Fee(cmd) => cmd::fee::execute(&core, cmd)?,
         Cmd::Audit(cmd) => cmd::audit::execute(&core, cmd)?,
         Cmd::Tr(cmd) => cmd::tr::execute(&core, cmd)?,
