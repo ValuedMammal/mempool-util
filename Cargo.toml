@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0.75"
 bitcoin = { version = "0.31", features = ["serde"] }
 bitcoincore-rpc = { git = "https://github.com/ValuedMammal/rust-bitcoincore-rpc.git", branch = "feat/raw-tx-info" }
-clap = { version = "3.0", features = ["derive", "env"] }
+clap = { version = "4.0", features = ["derive", "env"] }
 lazy_static = "1.4.0"
 log = "0.4.20"
 pretty_env_logger = "0.5.0"
