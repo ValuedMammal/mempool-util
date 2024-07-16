@@ -133,7 +133,7 @@ pub fn check_dust_full(block: &bitcoin::Block, core: &Client) -> Result<(usize, 
 
         // Get tx value from prevouts
         let mut tx_value = 0u64;
-        let tx_info = core.get_raw_transaction_info_verbose(&tx.txid(), None)?;
+        let tx_info = core.get_raw_transaction_info_verbose(&tx.compute_txid(), None)?;
         for input in &tx_info.vin {
             let prevout = input.prevout.as_ref().expect("input has prevout");
             tx_value += prevout.value.to_sat();
@@ -186,7 +186,7 @@ pub fn block_audit(block: &bitcoin::Block, projected: &[Txid]) -> f64 {
         .iter()
         .filter_map(|tx| {
             if !tx.is_coinbase() {
-                Some(tx.txid())
+                Some(tx.compute_txid())
             } else {
                 None
             }

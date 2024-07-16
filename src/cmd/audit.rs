@@ -96,7 +96,8 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
                 if tx.is_coinbase() {
                     continue;
                 }
-                let Ok(tx_info) = core.get_raw_transaction_info_verbose(&tx.txid(), None) else {
+                let Ok(tx_info) = core.get_raw_transaction_info_verbose(&tx.compute_txid(), None)
+                else {
                     log::debug!("tx info not available, continuing anyway");
                     continue;
                 };
