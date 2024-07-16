@@ -1,0 +1,21 @@
+name: Build check
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "Checkout"
+      uses: actions/checkout@v4
+    - name: "Install Rust"
+      uses: dtolnay/rust-toolchain@stable
+    - name: "Build"
+      run: cargo build
