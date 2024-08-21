@@ -13,13 +13,13 @@ jobs:
   Prepare:
     runs-on: ubuntu-latest
     outputs:
-      rustc_version: ${{ steps.read_toolchain.outputs.rustc_version }}
+      rust_version: ${{ steps.read_toolchain.outputs.rust_version }}
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
       - name: "Read rustc version"
         id: read_toolchain
-        run: echo "rustc_version=$(cat rustc-version)" >> $GITHUB_OUTPUT
+        run: echo "rust_version=$(cat rust-version)" >> $GITHUB_OUTPUT
   
   Check:
     runs-on: ubuntu-latest
@@ -40,7 +40,7 @@ jobs:
     - name: "Select toolchain"
       uses: dtolnay/rust-toolchain@v1
       with:
-        toolchain: ${{ needs.Prepare.outputs.rustc_version }}
+        toolchain: ${{ needs.Prepare.outputs.rust_version }}
     - name: "Install clippy"
       run: rustup component add clippy
     - name: "Lint"
