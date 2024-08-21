@@ -14,10 +14,10 @@ jobs:
         run: |
           set -x
           # Extract the date from whatever version of the compiler dtolnay/rust-toolchain gives us.
-          RUSTC_DATE=$(rustc --verbose --version | sed -ne 's/^commit-date: //p')
+          RUSTC_VERSION=$(rustc --verbose --version | sed -ne 's/^release: //p')
           # Update the version in the reference file.
-          echo "stable-${RUSTC_DATE}" > rustc-stable-version
-          echo "rustc_date=${RUSTC_DATE}" >> $GITHUB_ENV
+          echo "${RUSTC_VERSION}" > rustc-version
+          echo "rustc_version=${RUSTC_VERSION}" >> $GITHUB_ENV
           # In case of no new version don't make an empty PR.
           if ! git diff --exit-code > /dev/null; then
               echo "Updated rustc. Opening PR."
@@ -30,10 +30,11 @@ jobs:
         if: env.changes_made == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.CREATE_PR_TOKEN }}
           author: Update Rustc Bot <bot@example.com>
           committer: Update Rustc Bot <bot@example.com>
-          title: Automated weekly update to rustc (to stable-${{ env.rustc_date }})
+          title: Automated weekly update to rustc (to ${{ env.rustc_version }})
           body: |
            Automated update to Github CI workflow `rust.yml` by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
-          commit-message: Automated update to Github CI to rustc stable-${{ env.rustc_date }}
+          commit-message: Automated update to Github CI to rustc ${{ env.rustc_version }}
           branch: create-pull-request/weekly-stable-update
