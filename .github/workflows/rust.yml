@@ -10,18 +10,18 @@ on:
       - main
 
 jobs:
-  Prepare:
+  prepare:
     runs-on: ubuntu-latest
     outputs:
       rust_version: ${{ steps.read_toolchain.outputs.rust_version }}
     steps:
       - name: "Checkout repo"
         uses: actions/checkout@v4
-      - name: "Read rustc version"
+      - name: "Read rust version"
         id: read_toolchain
         run: echo "rust_version=$(cat rust-version)" >> $GITHUB_OUTPUT
   
-  Check:
+  check-stable:
     runs-on: ubuntu-latest
     steps:
     - name: "Checkout"
@@ -31,8 +31,8 @@ jobs:
     - name: "Cargo check"
       run: cargo check
   
-  Clippy:
-    needs: Prepare
+  format-and-lint:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
     - name: "Checkout"
@@ -41,7 +41,8 @@ jobs:
       uses: dtolnay/rust-toolchain@v1
       with:
         toolchain: ${{ needs.Prepare.outputs.rust_version }}
-    - name: "Install clippy"
-      run: rustup component add clippy
-    - name: "Lint"
+        components: rustfmt, clippy
+    - name: "rustfmt check"
+      run: cargo fmt --all -- --check
+    - name: "clippy"
       run: cargo clippy -- -D warnings
