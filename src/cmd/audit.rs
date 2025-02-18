@@ -117,7 +117,7 @@ pub fn execute(core: &Client, subcmd: AuditSubCmd) -> Result<()> {
             let path = path::PathBuf::from(format!("{HOME_DIR}/mempool-util/gbt.txt"));
             let projected = fs::read_to_string(path)?;
 
-            if projected.as_bytes().len() < 32 {
+            if projected.len() < 32 {
                 // nothing to do
                 return Ok(());
             }
