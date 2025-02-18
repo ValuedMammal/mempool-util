@@ -10,12 +10,6 @@ use std::time;
 
 /// Maximum block weight
 const MAX_BLOCK_WU: u64 = 4_000_000;
-/// Maximum transaction weight
-const _MAX_TX_WU: u64 = 400_000;
-/// Maximum per block sigops cost
-const _MAX_SIGOPS_COST: u32 = 80_000;
-/// Maximum per transaction sigops cost
-const _MAX_TX_SIGOPS_COST: u64 = 16_000;
 /// Number of attempts to fit a package in a block before considering it full
 const MAX_FAILURES: usize = 500;
 /// The most blocks that `BlockAssembler` will build, provided sufficient inventory.
@@ -27,7 +21,6 @@ struct BlockAssembler {
     next_height: u64,
     fees: u64,
     weight: u64,
-    //sigops: u32,
     inv: Inventory,
     blocks: Vec<BlockSummary>,
     modified: PriorityQueue<usize, TxPriority>,
@@ -56,10 +49,6 @@ pub struct BlockSummary {
     pub tx_count: usize,
     /// Block weight
     pub weight: u64,
-    // Block sigops
-    //pub sigops: u32,
-    /// Max consecutive failures
-    pub failures: usize,
     /// Block fees (btc)
     pub fees: f64,
     /// Feerate range (effective)
@@ -67,8 +56,6 @@ pub struct BlockSummary {
     /// Median effective feerate
     #[serde(skip_serializing_if = "Option::is_none")]
     pub median_effective_feerate: Option<f64>,
-    // Largest package size
-    //pub hi_package_len: Option<usize>,
     /// Ancestor score distribution
     #[serde(skip)]
     pub fee_histogram: Option<FeeHistogram>,
@@ -168,12 +155,10 @@ impl Cluster for BlockAssembler {
         // count ancestor data
         let mut ancestor_fee = 0u64;
         let mut ancestor_weight = 0u64;
-        //let mut ancestor_sigops = 0u32;
         for ancestor_id in &ancestors {
             let ancestor = self.pool.get(ancestor_id).expect("uid exists");
             ancestor_fee += ancestor.fee;
             ancestor_weight += ancestor.weight;
-            //ancestor_sigops += ancestor.sigops;
         }
 
         // score this tx
@@ -181,7 +166,6 @@ impl Cluster for BlockAssembler {
         tx.ancestors = ancestors;
         tx.ancestor_fee += ancestor_fee;
         tx.ancestor_weight += ancestor_weight;
-        //tx.ancestor_sigops += ancestor_sigops;
         tx.score = tx.ancestor_fee as f64 / (tx.ancestor_weight as f64 / 4.0);
         tx.links_set = true;
     }
@@ -195,7 +179,6 @@ impl BlockAssembler {
             next_height: 0,
             fees: 0,
             weight: 4000,
-            //sigops: 400,
             inv: Inventory::default(),
             blocks: vec![],
             modified: PriorityQueue::new(),
@@ -223,7 +206,6 @@ impl BlockAssembler {
     fn clear(&mut self) {
         self.fees = 0;
         self.weight = 4000;
-        //self.sigops = 400;
         self.inv = Inventory::default();
         self.next_height += 1;
     }
@@ -237,7 +219,6 @@ impl BlockAssembler {
     /// Test if the given package will fit in the candidate block
     fn test_package_fits(&self, tx: &AuditTx) -> bool {
         self.weight + tx.ancestor_weight < MAX_BLOCK_WU
-        //&& self.sigops + tx.ancestor_sigops < MAX_SIGOPS_COST
     }
 
     /// Select the given `tx` and its ancestors for inclusion in a block,
@@ -270,7 +251,6 @@ impl BlockAssembler {
                 tx.used = true;
                 self.weight += tx.weight;
                 self.fees += tx.fee;
-                //self.sigops += tx.sigops;
                 self.inv.lo_score = self.inv.lo_score.min(tx.score);
                 self.inv.hi_score = self.inv.hi_score.max(tx.score);
                 self.inv.scores.push(tx.score);
@@ -310,7 +290,6 @@ impl BlockAssembler {
             tx_count,
             weight: self.weight,
             fees: Amount::from_sat(self.fees).to_btc(),
-            failures: self.inv.failures,
             fee_range,
             median_effective_feerate,
             fee_histogram,
@@ -408,7 +387,7 @@ impl BlockAssembler {
                     }
                 }
             }
-        } // while
+        }
 
         if !self.inv.txn.is_empty() {
             // Collect remaining tx in a final unbounded block
@@ -431,7 +410,6 @@ impl BlockAssembler {
         let ancestor = self.pool.get(&uid).expect("uid exist");
         let root_fee = ancestor.fee;
         let root_weight = ancestor.weight;
-        //let root_sigops = ancestor.sigops;
         for child in &ancestor.children {
             if !visited.contains(child) {
                 descendant_stack.push(*child);
@@ -456,7 +434,6 @@ impl BlockAssembler {
                 tx.descendant_score = tx.descendant_score.min(effective_feerate);
                 tx.ancestor_fee -= root_fee;
                 tx.ancestor_weight -= root_weight;
-                //tx.ancestor_sigops -= root_sigops;
                 let old_score = tx.score;
                 tx.score = tx.ancestor_fee as f64 / (tx.ancestor_weight as f64 / 4.0);
 
