@@ -10,15 +10,8 @@ The goal of the project is to create tools for mempool analysis. Areas of inquir
     - track the spread between Core's historical estimator and our own near-term analysis
     - give context for rising/falling fee environment
 - Cluster analysis
-    - descendant tree depth
-
-### On chain stuff
+    - not implemented
 - Taproot adoption
-    - count p2tr outputs
-    - patterns of tapscript composition
-- Dust analysis
-- Chainstate growth
-- Peer survey & features signalling
 
 ### Ideas for experimental writeups:
 - Two flavors of research:
