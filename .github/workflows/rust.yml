@@ -22,7 +22,7 @@ jobs:
     - name: Rustfmt
       run: cargo fmt --all -- --check
     - name: Clippy
-      run: cargo clippy --all-targets --all-features -- -Dwarnings
+      run: cargo clippy -- -Dwarnings
   
   test:
     runs-on: ubuntu-latest

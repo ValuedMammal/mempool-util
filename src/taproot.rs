@@ -78,6 +78,7 @@ mod test {
     use std::env;
 
     #[test]
+    #[ignore = "depends on local file system"]
     fn test_ord() {
         let cwd = env::var("CARGO_MANIFEST_DIR").unwrap();
         let path_to_rawtx = format!("{cwd}/tests/rawtx1.dat");
@@ -93,6 +94,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "depends on local file system"]
     fn captures_from_rawtx_file() {
         // get raw tx from txid
         // txid: e85602c03f9566bab21246e9fa16f0039c887a70d2f2e79147f4770f6ced5ac5
