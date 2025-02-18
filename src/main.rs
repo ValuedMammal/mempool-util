@@ -26,11 +26,8 @@ fn main() -> anyhow::Result<()> {
     };
     url.push_str(port);
 
-    let rpc_pass = std::env::var("RPC_PASS").ok();
-    let auth = match (args.rpc_user, rpc_pass) {
-        (Some(user), Some(pass)) => Auth::UserPass(user, pass),
-        _ => anyhow::bail!("missing rpc credentials"),
-    };
+    let cookie = args.rpc_cookie.unwrap_or_default();
+    let auth = Auth::CookieFile(cookie.into());
     let core = Client::new(&url, auth)?;
 
     match args.cmd {

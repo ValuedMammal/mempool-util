@@ -7,12 +7,9 @@ pub struct Args {
     /// Network (bitcoin, testnet, signet, regtest) [default: signet]
     #[clap(long, short = 'n')]
     pub network: Option<String>,
-    /// Bitcoin Core RPC user
-    #[clap(long, env = "RPC_USER")]
-    pub rpc_user: Option<String>,
-    /// Bitcoin Core RPC password [env: RPC_PASS]
-    #[clap(long)]
-    pub rpc_pass: Option<String>,
+    /// Bitcoin Core RPC cookie file
+    #[clap(long, env = "RPC_COOKIE")]
+    pub rpc_cookie: Option<String>,
     #[clap(subcommand)]
     pub cmd: Cmd,
 }
