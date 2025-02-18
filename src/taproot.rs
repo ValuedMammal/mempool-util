@@ -29,14 +29,8 @@ pub fn tr_txo_count(block: bitcoin::Block) -> usize {
     txos.len()
 }
 
-/// Count number of transactions matching the "ord" pattern in the given block
-pub fn tr_ord_count(block: bitcoin::Block) -> usize {
-    let mut txs = block.txdata;
-    txs.retain(is_ord);
-    txs.len()
-}
-
-/// Is ord
+/// Whether the given transaction matches the "ord" pattern
+#[allow(unused)]
 fn is_ord(tx: &Transaction) -> bool {
     for input in &tx.input {
         if input.witness.len() >= 2 {

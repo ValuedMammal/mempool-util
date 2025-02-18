@@ -86,8 +86,6 @@ pub enum AuditSubCmd {
 pub enum TaprootSubCmd {
     /// Count the number of p2tr outputs
     Outputs(Block),
-    /// Scan a block for the "ord" pattern
-    Ord(Block),
 }
 
 /// A required block height
