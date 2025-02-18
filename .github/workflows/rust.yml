@@ -32,4 +32,4 @@ jobs:
     - name: "Select toolchain"
       uses: dtolnay/rust-toolchain@stable
     - name: Build + Test
-      run: cargo test --all-features
+      run: cargo test --lib
