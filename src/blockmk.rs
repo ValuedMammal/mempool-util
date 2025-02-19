@@ -237,7 +237,7 @@ impl BlockAssembler {
                     self.modified.remove(&ancestor.uid);
                 }
             }
-            sorted.sort_unstable_by(compare_ancestor_count);
+            sorted.sort();
             let package: Vec<usize> = sorted.into_iter().map(|(_, _, uid)| uid).collect();
             package
         };

@@ -62,7 +62,7 @@ impl AuditTx {
 
 impl PartialEq for AuditTx {
     fn eq(&self, other: &Self) -> bool {
-        self.uid == other.uid
+        self.score.eq(&other.score) && self.order.eq(&other.order) && self.uid.eq(&other.uid)
     }
 }
 
@@ -72,7 +72,7 @@ impl Ord for AuditTx {
     fn cmp(&self, other: &Self) -> Ordering {
         let a = (self.score, self.order, self.uid);
         let b = (other.score, other.order, other.uid);
-        compare_audit_tx(a, b)
+        a.partial_cmp(&b).expect("must have ordering")
     }
 }
 
@@ -92,7 +92,7 @@ pub struct TxPriority {
 
 impl PartialEq for TxPriority {
     fn eq(&self, other: &Self) -> bool {
-        self.uid == other.uid
+        self.score.eq(&other.score) && self.order.eq(&other.order) && self.uid.eq(&other.uid)
     }
 }
 
@@ -102,7 +102,7 @@ impl Ord for TxPriority {
     fn cmp(&self, other: &Self) -> Ordering {
         let a = (self.score, self.order, self.uid);
         let b = (other.score, other.order, other.uid);
-        compare_audit_tx(a, b)
+        a.partial_cmp(&b).expect("must have ordering")
     }
 }
 

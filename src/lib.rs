@@ -9,9 +9,7 @@ pub use {
     bitcoincore_rpc::{self, bitcoincore_rpc_json, Client, RpcApi},
     error::Result,
     std::collections::{HashMap, HashSet},
-    util::{
-        compare_ancestor_count, compare_audit_tx, key_index, median_from_sorted, try_from_value,
-    },
+    util::{key_index, median_from_sorted, try_from_value},
 };
 
 pub mod audittx;
