@@ -271,9 +271,7 @@ impl BlockAssembler {
         if is_full {
             height = Some(self.next_height);
             fee_histogram = Some(self.histogram_generate(&txn));
-            self.inv
-                .scores
-                .sort_by(|a, b| a.partial_cmp(b).expect("sort f64"));
+            self.inv.scores.sort_by(|a, b| a.total_cmp(b));
             let scores = &self.inv.scores;
             median_effective_feerate = Some(median_from_sorted(scores));
         }
