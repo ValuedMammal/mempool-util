@@ -730,10 +730,10 @@ mod test {
         let ancestor_id = 0usize;
         let effective_feerate = 5.0;
         maker.update_descendants(0, effective_feerate);
-        let child = maker.pool.get(&1).unwrap();
+        let parent = maker.pool.get(&1).unwrap();
+        assert!(!parent.ancestors.contains(&ancestor_id));
+        let child = maker.pool.get(&2).unwrap();
         assert!(!child.ancestors.contains(&ancestor_id));
-        let grandchild = maker.pool.get(&2).unwrap();
-        assert!(!grandchild.ancestors.contains(&ancestor_id));
 
         // Score changed
         // if a (comparatively) lo-fee ancestor is now in block,
@@ -741,8 +741,8 @@ mod test {
         // likewise, if hi-fee ancestor is in block,
         // expect descendant score decrease.
         let old_score = 7000.0 / (2400.0 / 4.0);
-        let score = 600.0 / (1600.0 / 4.0);
-        assert!(grandchild.score > old_score);
+        let score = 6000.0 / (1600.0 / 4.0);
+        assert!(child.score > old_score);
         let expect = TxPriority {
             uid: 2,
             order: 2,
@@ -750,9 +750,10 @@ mod test {
         };
 
         // Modified queue has two entries and
-        // grandchild is front of queue
+        // child is front of queue
         assert_eq!(maker.modified.len(), 2);
-        let (_uid, priority) = maker.modified.pop().unwrap();
+        let (uid, priority) = maker.modified.pop().unwrap();
+        assert_eq!(uid, child.uid);
         assert_eq!(priority, expect);
     }
 }
