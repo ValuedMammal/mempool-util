@@ -60,14 +60,6 @@ impl AuditTx {
     }
 }
 
-/// Defines how a scored mempool entry is prioritized by the modified queue
-#[derive(Debug)]
-pub struct TxPriority {
-    pub uid: usize,
-    pub order: u32,
-    pub score: f64,
-}
-
 impl PartialEq for AuditTx {
     fn eq(&self, other: &Self) -> bool {
         self.uid == other.uid
@@ -76,19 +68,26 @@ impl PartialEq for AuditTx {
 
 impl Eq for AuditTx {}
 
-#[allow(clippy::non_canonical_partial_ord_impl)]
-impl PartialOrd for AuditTx {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+impl Ord for AuditTx {
+    fn cmp(&self, other: &Self) -> Ordering {
         let a = (self.score, self.order, self.uid);
         let b = (other.score, other.order, other.uid);
         compare_audit_tx(a, b)
     }
 }
 
-impl Ord for AuditTx {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).expect("ordering is Some")
+impl PartialOrd for AuditTx {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
+}
+
+/// Defines how a scored mempool entry is prioritized by the modified queue
+#[derive(Debug)]
+pub struct TxPriority {
+    pub uid: usize,
+    pub order: u32,
+    pub score: f64,
 }
 
 impl PartialEq for TxPriority {
@@ -99,17 +98,16 @@ impl PartialEq for TxPriority {
 
 impl Eq for TxPriority {}
 
-#[allow(clippy::non_canonical_partial_ord_impl)]
-impl PartialOrd for TxPriority {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+impl Ord for TxPriority {
+    fn cmp(&self, other: &Self) -> Ordering {
         let a = (self.score, self.order, self.uid);
         let b = (other.score, other.order, other.uid);
         compare_audit_tx(a, b)
     }
 }
 
-impl Ord for TxPriority {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).expect("ordering is Some")
+impl PartialOrd for TxPriority {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
