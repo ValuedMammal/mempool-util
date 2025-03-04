@@ -344,11 +344,10 @@ impl BlockAssembler {
             // Check if this package fits, or if we're done building blocks, continue on packages until queues empty
             if self.test_package_fits(tx) || self.blocks.len() >= BLOCK_GOAL {
                 let package = self.add_package_tx(tx);
-                let effective_feerate = tx.descendant_score.min(tx.score);
                 for uid in package {
                     let tx = self.pool.get(&uid).expect("uid exists");
                     if !tx.children.is_empty() {
-                        self.update_descendants(tx.uid, effective_feerate);
+                        self.update_descendants(tx.uid);
                     }
                 }
                 self.inv.failures = 0;
@@ -400,7 +399,7 @@ impl BlockAssembler {
     }
 
     /// Walk remaining descendants, removing this ancestor `uid` and updating scores
-    fn update_descendants(&mut self, uid: usize, effective_feerate: f64) {
+    fn update_descendants(&mut self, uid: usize) {
         let mut visited = vec![];
         let mut descendant_stack = vec![];
 
@@ -427,9 +426,7 @@ impl BlockAssembler {
             }
 
             // Remove root tx as ancestor
-            // skip if tx already in block
             if tx.ancestors.remove(&uid) {
-                tx.descendant_score = tx.descendant_score.min(effective_feerate);
                 tx.ancestor_fee -= root_fee;
                 tx.ancestor_weight -= root_weight;
                 let old_score = tx.score;
@@ -728,8 +725,7 @@ mod test {
 
         // Ancestor removed from descendant's ancestors
         let ancestor_id = 0usize;
-        let effective_feerate = 5.0;
-        maker.update_descendants(0, effective_feerate);
+        maker.update_descendants(0);
         let parent = maker.pool.get(&1).unwrap();
         assert!(!parent.ancestors.contains(&ancestor_id));
         let child = maker.pool.get(&2).unwrap();
